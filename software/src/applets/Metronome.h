@@ -28,6 +28,11 @@ public:
 
     void Start() { }
 
+    void Unload() {
+        HS::clock_m.SetTempoBPM(HS::clock_m.tempo_setting);
+        HS::clock_m.SetShuffle(HS::clock_m.shuffle_setting);
+    }
+
     void Controller() {
         // Check the clock so that the little Metronome icon animates while
         // Metronome is selected
@@ -56,7 +61,7 @@ public:
     void OnEncoderMove(int direction) {
         HS::clock_m.SetTempoBPM(clock_m.GetTempo() + direction);
     }
-        
+
     uint64_t OnDataRequest() {
         return 0;
     }
@@ -114,5 +119,5 @@ private:
         else gfxLine(29,50,37,32);
     }
 
-    
+
 };
