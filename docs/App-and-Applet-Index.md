@@ -125,6 +125,7 @@ If you're coming from any of the other Hemisphere forks, note that many of the a
 * [VectorMod](VectorMod) - Dual One-shots from a library of bipolar and unipolar shapes
 * [VectorMorph](VectorMorph) - Dual (or linked) phase scrubbing along a library of bipolar and unipolar shapes
 * [Voltage](Voltage) - static output CV
+* [WTVCO](WTVCO) - WaveTable Voltage Controlled Oscillator
 
 ***
 
@@ -138,7 +139,7 @@ If you're coming from any of the other Hemisphere forks, note that many of the a
 | **CV Recorder**              | [ASR](ASR), [CVRec](CV-Recorder)                                                                                                                                                 |                                                                                          |
 | **Digital Logic**            | [Binary Counter](Binary-Counter), [Compare](Compare), [Cumulus](Cumulus), [Logic](Logic), [Schmitt](Schmitt-Trigger), [TL Neuron](Threshold-Logic-Neuron), [Trending](Trending)                                                         | [Neural Net](Neural-Net)                                                                             |
 | **Delay**                    | [GateDelay](Gate-Delay)                                                                                                                                                         |                                                                                          |
-| **Drums / Synth Voice**                    | [BootsNCat](BootsNCat), [BugCrack](BugCrack)                                                                                                                                         | [Viznutcracker, sweet!](Viznutcracker-sweet)                                                                  |
+| **Drums / Synth Voice**                    | [BootsNCat](BootsNCat), [BugCrack](BugCrack), [WTVCO](WTVCO)                                                                                                                                         | [Viznutcracker, sweet!](Viznutcracker-sweet)                                                                  |
 | **Effect**                   | [Dr. LoFi](Dr.-LoFi)                                                                                                                                                          |                                                                                          |
 | **Envelope Follower**        | [EnvFollow](Envelope-Follower), [Slew](Slew)                                                                                                                                             |                                                                                          |
 | **Envelope Generator**       | [ADSR](ADSR-EG), [AD EG](AD-EG), [VectorEG](VectorEG)                                                                                                                                 | [Piqued](Piqued), [Dialectic Ping Pong](Dialectic-Ping-Pong)                                                          |

@@ -121,7 +121,10 @@ public:
             switch (cv_dest[ch]) {
                 case PARAM_PITCH_1:
                 case PARAM_PITCH_2:
-                    _pitch[ch] = pitch[ch] + In(ch);
+                    if (pitch_cv_link) { // only weird thing here is if both are set to pitch, In(1) overrides In(0) when linked
+                        _pitch[0] = pitch[0] + In(ch);
+                        _pitch[1] = pitch[1] + In(ch);
+                    } else _pitch[ch] = pitch[ch] + In(ch);
                     break;
                 case PARAM_WT_BLEND:
                     _wt_blend = wt_blend + Proportion(In(ch), 5 * HEMISPHERE_MAX_INPUT_CV / 6, WT_SIZE - 1);  // CV input < 0V or > 5V causes wavefolding
@@ -161,7 +164,9 @@ public:
 #endif
 
         Out(0, _attenuation * (wavetable[OUT][phase_acc_msb[0]] * MAX_AMPLITUDE / 127) / 100);
-        Out(1, _attenuation * (wavetable[OUT][(255 * osc2_rev) + (1 - 2 * osc2_rev) * phase_acc_msb[1]] * MAX_AMPLITUDE / 127) / 100); // osc2 waveform can be reversed
+        Out(1, _attenuation * (wavetable[OUT][
+            phase_acc_msb[1] * (1 - 2 * osc2_rev) + (255 * osc2_rev) // osc2 waveform can be reversed
+        ] * MAX_AMPLITUDE / 127) / 100);
     }
 
     void View() {
@@ -183,18 +188,18 @@ public:
         DrawSelector();
     }
 
-    void OnButtonPress() {
-        if (cursor == 0) return; // add some feature to WAVEFORM_OUT?
-        else CursorToggle();
-    }
-
     void AuxButton() {
-        if (menu_page == MENU_WAVETABLES) {
-            if (page_cursor > WAVEFORM_OUT) {
-                const int idx = page_cursor - WAVEFORM_A;
-                if (waveform[idx] == WAVE_NOISE) noise_freeze = !noise_freeze; // toggle "realtime" or frozen noise wave buffer
-                else if (waveform[idx] == WAVE_RAND_STEPPED) GenerateWaveForm_RandStepped(wavetable[idx]); // re-roll random step wave
-            }
+        switch(menu_page) {
+            case MENU_WAVETABLES: {
+                if (page_cursor > WAVEFORM_OUT) {
+                    const int idx = page_cursor - WAVEFORM_A;
+                    if (waveform[idx] == WAVE_NOISE) noise_freeze = !noise_freeze; // toggle "realtime" or frozen noise wave buffer
+                    else if (waveform[idx] == WAVE_RAND_STEPPED) GenerateWaveForm_RandStepped(wavetable[idx]); // re-roll random step wave
+                }
+                break;}
+            case MENU_PARAMS:
+                if (page_cursor == PARAM_PITCH_1 || page_cursor == PARAM_PITCH_2)
+                    pitch_cv_link = !pitch_cv_link; // toggle pitch_cv_link
         }
     }
 
@@ -216,6 +221,9 @@ public:
         switch (menu_page) {
             case MENU_WAVETABLES:
                 switch(page_cursor) {
+                    case WAVEFORM_OUT:
+                        wt_blend = constrain(wt_blend + direction, 0, (uint8_t)(WT_SIZE - 1));
+                        break;
                     case WAVEFORM_A:
                     case WAVEFORM_B:
                     case WAVEFORM_C:
@@ -275,25 +283,37 @@ public:
         uint64_t data = 0;
         Pack(data, PackLocation {0,8}, (uint8_t)(pitch[0] / 128)); // only need to store semitone, can unpack to full pitch value
         Pack(data, PackLocation {8,8}, (uint8_t)(pitch[1] / 128)); // unsigned cast fixes packing of negative pitch values
-        Pack(data, PackLocation {24,1}, noise_freeze);
-        Pack(data, PackLocation {25,1}, osc2_rev);
-        Pack(data, PackLocation {26,3}, cv_dest[0]);
-        Pack(data, PackLocation {29,3}, cv_dest[1]);
+        Pack(data, PackLocation {16,8}, (uint8_t)wt_blend);
+        // Pack(data, PackLocation {24,7}, attenuation);
+        // Pack(data, PackLocation {31,8}, pulse_duty);
+        // Pack(data, PackLocation {39,6}, sample_rate_div);
+        Pack(data, PackLocation {24,3}, cv_dest[0]);
+        Pack(data, PackLocation {27,3}, cv_dest[1]);
+        Pack(data, PackLocation {30,1}, noise_freeze); // noise_freeze
+        Pack(data, PackLocation {31,1}, osc2_rev); // osc2_rev
+        Pack(data, PackLocation {32,1}, pitch_cv_link); // pitch_cv_link
+        // empty bits here
         for (size_t w = 0; w < 3; ++w) {
-            Pack(data, PackLocation {32 + w*5, 5}, waveform[w]);
+            Pack(data, PackLocation {46 + w*6, 6}, waveform[w]); // store up to 32 waves
         }
         return data;
-    }
+    }//
 
     void OnDataReceive(uint64_t data) {
         pitch[0] = constrain(128 * (int8_t)Unpack(data, PackLocation {0,8}), MIN_PITCH, MAX_PITCH);
         pitch[1] = constrain(128 * (int8_t)Unpack(data, PackLocation {8,8}), MIN_PITCH, MAX_PITCH);
-        noise_freeze = constrain(Unpack(data, PackLocation {24,1}), 0, 1);
-        osc2_rev = constrain(Unpack(data, PackLocation {25,1}), 0, 1);
-        cv_dest[0] = constrain(Unpack(data, PackLocation {26,3}), 0, PARAM_LAST);
-        cv_dest[1] = constrain(Unpack(data, PackLocation {29,3}), 0, PARAM_LAST);
+        wt_blend = constrain((int)Unpack(data, PackLocation{16,8}), 0, (int)(WT_SIZE - 1));
+        // attenuation = constrain(Unpack(data, PackLocation {24,7}), 0, 100);
+        // pulse_duty = constrain(Unpack(data, PackLocation {31,8}), 0, 255);
+        // sample_rate_div = constrain(Unpack(data, PackLocation {39,6}), 0, SR_DIV_LIMIT);
+        cv_dest[0] = constrain(Unpack(data, PackLocation {24,3}), 0, PARAM_LAST);
+        cv_dest[1] = constrain(Unpack(data, PackLocation {27,3}), 0, PARAM_LAST);
+        noise_freeze = (uint8_t)(constrain(Unpack(data, PackLocation {30,1}), 0, 1));
+        osc2_rev = (uint8_t)(constrain(Unpack(data, PackLocation {31,1}), 0, 1));
+        pitch_cv_link = (uint8_t)(constrain(Unpack(data, PackLocation {32,1}), 0, 1));
+        // empty bits here
         for (size_t w = 0; w < 3; ++w) {
-            waveform[w] = (WaveForms) constrain(Unpack(data, PackLocation {32 + w*5, 5}), 0, WAVEFORM_COUNT - 1);
+            waveform[w] = (WaveForms) constrain(Unpack(data, PackLocation {46 + w*6, 6}), 0, WAVEFORM_COUNT - 1); // store up to 32 waves
             GenerateWaveTable(w);
         }
     }
@@ -317,8 +337,6 @@ private:
     int menu_page = 0;
     int page_cursor = 0;
 
-    uint8_t cv_dest[2] = { PARAM_PITCH_1, PARAM_WT_BLEND };
-
     static constexpr int16_t MAX_PITCH = 16256;
     static constexpr int16_t MIN_PITCH = -16384;
     static constexpr size_t WT_SIZE = 256;
@@ -330,13 +348,16 @@ private:
     uint8_t pulse_duty = 127;
     uint8_t sample_rate_div = 0;
 
-    uint32_t phase[2];
-
     bool noise_freeze = false;
     bool osc2_rev = false;
+    bool pitch_cv_link = false;
+
+    uint8_t cv_dest[2] = { PARAM_PITCH_1, PARAM_WT_BLEND };
+
+    uint32_t phase[2];
 
     WaveForms waveform[3];
-    std::array<int8_t, WT_SIZE> wavetable[4]; // tried heap allocation but had issues with restoring waveforms when changing presets
+    std::array<int8_t, WT_SIZE> wavetable[4]; // tried heap allocation but had intermittent hanging issues with T3.2 (fine on T4.1)
 
     uint8_t wt_sample = 0; // used to update gui even at low frequency
     uint8_t inc_count = 0; // count each time the phase increments to divide sample rate
@@ -382,11 +403,21 @@ private:
         gfxCursor(x, y, w);
     }
 
+    void DrawBlendicator(int b) {
+        const uint8_t y = HEADER_HEIGHT;
+        const uint8_t h = 1;
+
+        uint8_t x =  1 + X_DIV * (1 + (b / 128)) + ((b / 64) % 2) * Proportion(b - (64 * (b / 64)), 63, X_DIV);
+        uint8_t w = -1 + X_DIV * (1 + ((b / 64) % 2)) + ((!((b / 64) % 2) * 2) - 1) * Proportion(b - (64 * (b / 64)), 63, X_DIV);
+
+        gfxRect(x, y, w, h);
+    }
+
     void DrawWaveMenu() {
         uint8_t x = 3;
         uint8_t y = MENU_ROW;
 
-        if (!EditMode()) {
+        if (!EditMode() || page_cursor == WAVEFORM_OUT) {
             gfxBitmap(x + 1, y, 8, WAVEFORM_ICON);
             char label[] = {'A', '\0'};
             for (int i = 0; i < 3; ++i) {
@@ -394,6 +425,7 @@ private:
                 gfxPrint(x + 2, y, label);
                 ++label[0];
             }
+            if (page_cursor == WAVEFORM_OUT) DrawBlendicator(wt_blend);
         } else {
             switch(page_cursor) {
                 case WAVEFORM_A:
@@ -447,15 +479,15 @@ private:
         gfxIcon(0, y, NOTE_ICON); gfxBitmap(6, y + 6, 3, SUP_ONE); // Pitch 1
         gfxPos(6, y); graphics.printf("%4d", pitch[0] / 128);
 
-        gfxIcon(32, y, NOTE_ICON); gfxBitmap(38, y + 2, 3, SUB_TWO); // Pitch 2
+        gfxIcon(32, y, pitch_cv_link ? LINK_ICON : NOTE_ICON); gfxBitmap(38, y + 2, 3, SUB_TWO); // Pitch 2
         gfxPos(38, y); graphics.printf("%4d", pitch[1] / 128);
         // }
         y += Y_DIV;
 
-        gfxIcon(1, y, WAVEFORM_ICON); gfxBitmap(8, y - 1, 3, SUP_ONE); gfxBitmap(8, y + 1, 3, SUB_TWO); // Blend
+        gfxIcon(1, y, WAVEFORM_ICON); gfxBitmap(8, y - 1, 3, SUP_ONE); gfxBitmap(8, y + 2, 3, SUB_TWO); // Blend
         gfxPos(6, y); graphics.printf("%4d", wt_blend);
 
-        gfxIcon(33, y, WAVEFORM_ICON); gfxBitmap(40, y + 1, 3, SUB_TWO); // Osc Waveform Reversal
+        gfxIcon(33, y, WAVEFORM_ICON); gfxBitmap(40, y + 2, 3, SUB_TWO); // Osc Waveform Reversal
         gfxIcon(50, y, osc2_rev ? ROTATE_L_ICON : ROTATE_R_ICON);
         y += Y_DIV;
 
