@@ -30,6 +30,8 @@
 #ifndef HSMIDI_H
 #define HSMIDI_H
 
+#include "HSUtils.h"
+
 // Teensyduino USB MIDI Library message numbers
 // See https://www.pjrc.com/teensy/td_midi.html
 
@@ -391,6 +393,8 @@ public:
     /* Given a MIDI note number, return the pitch CV value */
     static int CV(uint8_t midi_note_number, int transpose = 0) {
         int octave = midi_note_number / 12;
+        octave += (HEMISPHERE_MIN_CV == 0) * 3; // NorthernLightsModular and VOR [0,10]
+        octave -= (HEMISPHERE_MIN_CV == -7680) * 2; // VOR [-5,5]
         int semitone = midi_note_number % 12;
         int cv = (octave * (12 << 7)) + (semitone * 128) + (transpose * 128) - (5 * (12 << 7));
         return cv;
