@@ -82,7 +82,7 @@ public:
     }
 
     void OnDataReceive(uint64_t data) {
-        p = Unpack(data, PackLocation {0,7});
+        p = constrain(Unpack(data, PackLocation {0,7}), 0, 100);
     }
 
 protected:
