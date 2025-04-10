@@ -127,7 +127,7 @@ public:
             }
         }
     }
-        
+
     uint64_t OnDataRequest() {
         uint64_t data = 0;
         Pack(data, PackLocation {0,6}, tone[0]);
@@ -139,11 +139,11 @@ public:
     }
 
     void OnDataReceive(uint64_t data) {
-        tone[0] = Unpack(data, PackLocation {0,6});
-        decay[0] = Unpack(data, PackLocation {6,6});
-        tone[1] = Unpack(data, PackLocation {12,6});
-        decay[1] = Unpack(data, PackLocation {18,6});
-        blend = Unpack(data, PackLocation {24,6});
+        tone[0] = constrain(Unpack(data, PackLocation {0,6}), 0, BNC_MAX_PARAM);
+        decay[0] = constrain(Unpack(data, PackLocation {6,6}), 0, BNC_MAX_PARAM);
+        tone[1] = constrain(Unpack(data, PackLocation {12,6}), 0, BNC_MAX_PARAM);
+        decay[1] = constrain(Unpack(data, PackLocation {18,6}), 0, BNC_MAX_PARAM);
+        blend = constrain(Unpack(data, PackLocation {24,6}), 0, BNC_MAX_PARAM);
     }
 
 protected:
@@ -167,7 +167,7 @@ private:
     int noise_tone_countdown = 0;
     uint32_t noise;
     int levels[2]; // For display
-    
+
     // Settings
     int tone[2];
     int decay[2];
