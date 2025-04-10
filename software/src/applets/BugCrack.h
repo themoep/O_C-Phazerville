@@ -294,20 +294,20 @@ public:
     }
 
     void OnDataReceive(uint64_t data) {
-        tone_kick = Unpack(data, PackLocation {0,6});
-        decay_kick = Unpack(data, PackLocation {6,6});
-        punch = Unpack(data, PackLocation {12,6});
-        decay_punch = Unpack(data, PackLocation {18,6});
+        tone_kick = constrain(Unpack(data, PackLocation {0,6}), 0, BNC_MAX_PARAM);
+        decay_kick = constrain(Unpack(data, PackLocation {6,6}), 0, BNC_MAX_PARAM);
+        punch = constrain(Unpack(data, PackLocation {12,6}), 0, BNC_MAX_PARAM);
+        decay_punch = constrain(Unpack(data, PackLocation {18,6}), 0, BNC_MAX_PARAM);
 
-        tone_snare = Unpack(data, PackLocation {24,6});
-        decay_snare = Unpack(data, PackLocation {30,6});
-        snap = Unpack(data, PackLocation {36,6});
-        blend_snare = Unpack(data, PackLocation {42,6});
+        tone_snare = constrain(Unpack(data, PackLocation {24,6}), 0, BNC_MAX_PARAM);
+        decay_snare = constrain(Unpack(data, PackLocation {30,6}), 0, BNC_MAX_PARAM);
+        snap = constrain(Unpack(data, PackLocation {36,6}), 0, BNC_MAX_PARAM);
+        blend_snare = constrain(Unpack(data, PackLocation {42,6}), 0, BNC_MAX_PARAM);
 
-        cv_mode_kick = Unpack(data, PackLocation {48,4});
-        cv_mode_snare = Unpack(data, PackLocation {52,4});
+        cv_mode_kick = constrain(Unpack(data, PackLocation {48,4}), 0, 4);
+        cv_mode_snare = constrain(Unpack(data, PackLocation {52,4}), 0, 4);
 
-        mix_outs = Unpack(data, PackLocation {56,1});
+        mix_outs = constrain(Unpack(data, PackLocation {56,1}), 0, 1);
     }
 
 protected:
