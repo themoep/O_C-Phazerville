@@ -50,7 +50,7 @@ public:
 
     void Controller() {
         if (Clock(1)) { // Reset
-            step = 0; 
+            step = 0;
             reset = true;
             pitch_out_for_step();
         }
@@ -138,7 +138,7 @@ public:
 
         if (cursor != CHORD) replay = 1;
     }
-        
+
     uint64_t OnDataRequest() {
         uint64_t data = 0;
         Pack(data, PackLocation {0,8}, sel_chord);
@@ -147,8 +147,8 @@ public:
     }
 
     void OnDataReceive(uint64_t data) {
-        ImprintChord(Unpack(data, PackLocation {0,8}));
-        transpose = Unpack(data, PackLocation {8,8}) - 24;
+        ImprintChord(constrain(Unpack(data, PackLocation {0,8}), 0, Nr_of_arp_chords -1));
+        transpose = constrain((Unpack(data, PackLocation {8,8}) - 24), -24, 24);
     }
 
 protected:
