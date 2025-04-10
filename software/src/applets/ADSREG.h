@@ -27,11 +27,11 @@
   * Output Level indicators have been shrunk to make room for additional on screen indicators for which envelope you are editing.
   * Switching between envelopes is currently handled by simply pressing the encoder button until you pass the release stage on each envelope which will toggle the active envelope you are editing
   * Envelope is indicated by A or B just above the ADSR segments.
-  * 
+  *
   * TODO: UI Design:
   * Update to allow menu to select CV destinations for CV Input Sources on CH1/CH2
   *   This could be assignable to a different destination based on probability potentially as well
-  * Update to allow internal GATE/Trig count to apply a modulation value to any or each of the envelope segments 
+  * Update to allow internal GATE/Trig count to apply a modulation value to any or each of the envelope segments
 
 */
 
@@ -148,10 +148,10 @@ public:
         return;
       }
       for(size_t ch = 0; ch < 2; ++ch) {
-        adsr_env[ch].setting[0] = Unpack(data, PackLocation {ch*32 +  0,8});
-        adsr_env[ch].setting[1] = Unpack(data, PackLocation {ch*32 +  8,8});
-        adsr_env[ch].setting[2] = Unpack(data, PackLocation {ch*32 + 16,8});
-        adsr_env[ch].setting[3] = Unpack(data, PackLocation {ch*32 + 24,8});
+        adsr_env[ch].setting[0] = constrain(Unpack(data, PackLocation {ch*32 +  0,8}), 1, STAGE_MAX_VALUE);
+        adsr_env[ch].setting[1] = constrain(Unpack(data, PackLocation {ch*32 +  8,8}), 1, STAGE_MAX_VALUE);
+        adsr_env[ch].setting[2] = constrain(Unpack(data, PackLocation {ch*32 + 16,8}), 1, STAGE_MAX_VALUE);
+        adsr_env[ch].setting[3] = constrain(Unpack(data, PackLocation {ch*32 + 24,8}), 1, STAGE_MAX_VALUE);
       }
     }
 
