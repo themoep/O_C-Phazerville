@@ -109,12 +109,12 @@ public:
     }
 
     void OnDataReceive(uint64_t data) {
-        scale_factor[0] = Unpack(data, PackLocation { 0,10}) - 500;
-        scale_factor[1] = Unpack(data, PackLocation {10,10}) - 500;
-        offset[0]       = Unpack(data, PackLocation {20, 8}) - 100;
-        offset[1]       = Unpack(data, PackLocation {28, 8}) - 100;
-        transpose[0]    = Unpack(data, PackLocation {36, 7}) - 36;
-        transpose[1]    = Unpack(data, PackLocation {43, 7}) - 36;
+        scale_factor[0] = constrain((Unpack(data, PackLocation { 0,10}) - 500), -500, 500);
+        scale_factor[1] = constrain((Unpack(data, PackLocation {10,10}) - 500), -500, 500);
+        offset[0]       = constrain((Unpack(data, PackLocation {20, 8}) - 100), -100, 100);
+        offset[1]       = constrain((Unpack(data, PackLocation {28, 8}) - 100), -100, 100);
+        transpose[0]    = constrain((Unpack(data, PackLocation {36, 7}) - 36),  -36,  60);
+        transpose[1]    = constrain((Unpack(data, PackLocation {43, 7}) - 36),  -36,  60);
     }
 
 protected:
