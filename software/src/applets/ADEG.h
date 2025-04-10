@@ -110,7 +110,7 @@ public:
         }
         last_change_ticks = OC::CORE::ticks;
     }
-        
+
     uint64_t OnDataRequest() {
         uint64_t data = 0;
         Pack(data, PackLocation {0,8}, attack);
@@ -119,8 +119,8 @@ public:
     }
 
     void OnDataReceive(uint64_t data) {
-        attack = Unpack(data, PackLocation {0,8});
-        decay = Unpack(data, PackLocation {8,8});
+        attack = constrain(Unpack(data, PackLocation {0,8}), 0, HEM_ADEG_MAX_VALUE);
+        decay = constrain(Unpack(data, PackLocation {8,8}), 0, HEM_ADEG_MAX_VALUE);
     }
 
 protected:
@@ -136,7 +136,7 @@ protected:
     help[HELP_EXTRA2] = "";
     //                  "---------------------" <-- Extra text size guide
   }
-    
+
 private:
     simfloat signal; // Current signal level for each channel
     int phase; // 0=Not running 1=Attack 2=Decay
