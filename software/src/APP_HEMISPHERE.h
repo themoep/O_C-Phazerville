@@ -1581,7 +1581,7 @@ static size_t HEMISPHERE_restore(const void *storage) {
     HS::hidden_applets[1] = hem_presets[HEM_NR_OF_PRESETS].GetData(HEM_SIDE(1));
 
     HS::frame.MIDIState.pc_channel =
-      constrain(hem_presets[HEM_NR_OF_PRESETS].GetGlobals(), 0, 17);
+      constrain((int)hem_presets[HEM_NR_OF_PRESETS].GetGlobals(), 0, 17);
 
     return used;
 #endif
