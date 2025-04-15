@@ -16,8 +16,11 @@
 
 namespace OC {
 
-static constexpr uint16_t _ADC_OFFSET_NLM = (uint16_t)((float)pow(2,OC::ADC::kAdcResolution)*1.0f);   // ADC offset @3.3V
+#ifdef NORTHERNLIGHT
+static constexpr uint16_t _ADC_OFFSET = (uint16_t)((float)pow(2,OC::ADC::kAdcResolution)*1.0f);       // ADC offset @3.3V
+#else
 static constexpr uint16_t _ADC_OFFSET = (uint16_t)((float)pow(2,OC::ADC::kAdcResolution)*0.6666667f); // ADC offset @2.2V
+#endif
 
 static constexpr unsigned kCalibrationAdcSmoothing = 4;
 
