@@ -42,7 +42,9 @@
 #include "applets/DrumMap.h"
 #include "applets/DualQuant.h"
 #include "applets/TwoRings.h"
+#if !defined(CUSTOM_BUILD) || defined(PEWPEWPEW)
 #include "applets/DuoTET.h"
+#endif
 #include "applets/EbbAndLfo.h"
 #include "applets/EnigmaJr.h"
 //#include "applets/EnsOscKey.h"
@@ -154,7 +156,9 @@ AppletRegistry reg{
     DeclareApplet<DrLoFi>{16, 0x80},
     DeclareApplet<DrumMap>{57, 0x02},
     DeclareApplet<DualQuant>{9, 0x08},
+#if !defined(CUSTOM_BUILD) || defined(PEWPEWPEW)
     DeclareApplet<DuoTET>{63, 0x08},
+#endif
     DeclareApplet<EbbAndLfo>{7, 0x01},
     DeclareApplet<EnigmaJr>{45, 0x02},
     DeclareApplet<EnvFollow>{42, 0x11},
