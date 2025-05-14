@@ -53,14 +53,14 @@ struct MIDIMapping {
   int16_t output; // translated CV values
 
   uint32_t Pack() const {
-    return function_cc | (function << 8)
-      | (channel << 16) | (dac_polyvoice << 24);
+    return (function_cc & 0xFF) | (function << 8) | (channel << 16) | (dac_polyvoice << 24);
   }
   void Unpack(uint32_t data) {
-    function_cc = data & 0x7F;
-    function = extract_value<uint8_t>(data >> 8);
-    channel = extract_value<uint8_t>(data >> 16);
-    dac_polyvoice = extract_value<uint8_t>(data >> 24);
+    function_cc = data & 0xFF;
+    function = (data >> 8) & 0xFF;
+    if (function > HEM_MIDI_MAX_FUNCTION) function = 0;
+    channel = (data >> 16) & 0x1F;
+    dac_polyvoice = (data >> 24) & 0x0F;
   }
 };
 
