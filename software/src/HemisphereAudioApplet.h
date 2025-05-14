@@ -123,7 +123,7 @@ public:
         case CV_INPUT_MAP: {
           int8_t& att
             = std::get<CVInputMap*>(selected_input_map)->attenuversion;
-          att = constrain(att + direction, -100, 100);
+          att = constrain(att + direction, -125, 125);
           break;
         }
         case DIGITAL_INPUT_MAP: {
