@@ -33,6 +33,7 @@
 // ideal to be able to modulate the parameters of the two quantizers
 // using other applets.
 
+#include <arm_math.h>
 #include "../CVInputMap.h"
 
 #define DUOTET_SCALE_MAX_LEN 32
@@ -208,22 +209,22 @@ public:
 
         for(int i=0; i<tet; i++) {
             gfxPixel(
-                (int)(x+sin(2.0*M_PI*i/tet)*((w-5)>>1)),
-                (int)(y-cos(2.0*M_PI*i/tet)*(h>>1))
+                (int)(x+arm_sin_f32(2.0*M_PI*i/tet)*((w-5)>>1)),
+                (int)(y-arm_cos_f32(2.0*M_PI*i/tet)*(h>>1))
             );
         }
 
         for(int i=0; i<len; i++) {
             int note = scale[i];
             gfxCircle(
-                (int)(x+sin(2.0*M_PI*note/tet)*((w-5)>>1)),
-                (int)(y-cos(2.0*M_PI*note/tet)*(h>>1)),
+                (int)(x+arm_sin_f32(2.0*M_PI*note/tet)*((w-5)>>1)),
+                (int)(y-arm_cos_f32(2.0*M_PI*note/tet)*(h>>1)),
                 2
             );
             if(getPitchClass(getNoteA()) == note || getPitchClass(getNoteB()) == note) {
                 gfxFrame(
-                    (int)(x+sin(2.0*M_PI*note/tet)*((w-5)>>1))-1,
-                    (int)(y-cos(2.0*M_PI*note/tet)*(h>>1))-1,
+                    (int)(x+arm_sin_f32(2.0*M_PI*note/tet)*((w-5)>>1))-1,
+                    (int)(y-arm_cos_f32(2.0*M_PI*note/tet)*(h>>1))-1,
                     3, 3
                 );
             }
