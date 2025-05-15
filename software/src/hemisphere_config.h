@@ -18,7 +18,9 @@
 #include "applets/ASR.h"
 #include "applets/AttenuateOffset.h"
 #include "applets/Binary.h"
+#ifdef PEWPEWPEW
 #include "applets/BootsNCat.h"
+#endif
 #include "applets/Brancher.h"
 #include "applets/BugCrack.h"
 #include "applets/Burst.h"
@@ -137,7 +139,9 @@ AppletRegistry reg{
     DeclareApplet<ASR>{47, 0x09},
     DeclareApplet<AttenuateOffset>{56, 0x10},
     DeclareApplet<Binary>{41, 0x41},
+#ifdef PEWPEWPEW
     DeclareApplet<BootsNCat>{55, 0x80},
+#endif
     DeclareApplet<Brancher>{4, 0x14},
     DeclareApplet<BugCrack>{51, 0x80},
     DeclareApplet<Burst>{31, 0x04},
