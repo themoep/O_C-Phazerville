@@ -619,7 +619,6 @@ void Settings_screensaver() {
       //       while one byte in the framebuffer is a column of 8 pixels
       gfxBitmap((i & 0x1)*64, (i>>1)*8, 64, pewpew_bits + i*64);
     }
-    Settings_instance.PEWPEW();
 #endif
 }
 
