@@ -412,14 +412,14 @@ void SH1106_128x64_Driver::SPI_send(void *bufr, size_t n) {
   #if defined(ARDUINO_TEENSY41)
     if (OLED_Uses_SPI1) {
       SPI1.beginTransaction(
-        SPISettings(NorthernLightModular? 8000000 : 24000000, MSBFIRST, SPI_MODE0)
+        SPISettings(8000000, MSBFIRST, SPI_MODE0)
       );
       SPI1.transfer(bufr, NULL, n);
       SPI1.endTransaction();
       return;
     }
   #endif
-  SPI.beginTransaction(SPISettings(24000000, MSBFIRST, SPI_MODE0));
+  SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
   LPSPI4_TCR |= LPSPI_TCR_PCS(3); // do not interfere with DAC's CS pin
   SPI.transfer(bufr, NULL, n);
   SPI.endTransaction();
