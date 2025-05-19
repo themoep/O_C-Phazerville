@@ -5,18 +5,18 @@ TODO (Roadmap)
 * T4.1 - expand to 8 channels: Piqued, Quadraturia, Captain MIDI
 * Audio Applets for T4.1
   - add a basic filter to Osc
-  - multi-mode (HP, BP, LP) for Filt/Fold
   - 3-band EQ / multi-band dynamics
-* MIDI mapping for param modulation sources
+  - WAVPlay: rework looping/caching; support more metadata tags (tempo, cue points)
 * Config option for LFS vs. SD for preset storage
 
 # v2.0
 * **Fully merge "abandoned/refactoring" branch from pld**
-  - this is partially done on the dev/2.0 branch
+  - this is mostly done on the dev/2.0 branch
 * Auto-tuner with floor/ceiling detection (fail gracefully)
 * generalized AppletParams for flexible assignment, extra virtual I/O
-  - MIDI Learn for anything
+* Pop-up MIDI Map editor
 * Integrate Calibr8or with DAC for global tracking adjustments
+* USB Gamepad support
 
 # ???
 * Update Boilerplates - I just assume this needs attention
@@ -31,6 +31,8 @@ TODO (Roadmap)
 * Snake Game
 
 # [DONE]
+* MIDI mapping for param modulation sources
+- multi-mode (HP, BP, LP) for Filt/Fold
 * Quadrants Preset Bank switching
 * Config files on LittleFS / SD for T4.x
 * Unipolar randomize in SequenceX
