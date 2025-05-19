@@ -5,13 +5,27 @@ template <AudioChannels Channels>
 class FilterFolderApplet : public HemisphereAudioApplet {
 
 public:
+  enum FiltFoldCursor {
+    FOLD_AMT,
+    FOLD_CV,
+    FILTMODE,
+    FILTER_FREQ,
+    FILTER_FREQ_CV,
+    FILTER_RES,
+    FILTER_RES_CV,
+    AMP,
+    AMP_CV,
+
+    CURSOR_MAX = AMP_CV
+  };
+
   const char* applet_name() {
     return "Filt/Fold";
   }
 
   void Start() {
     for (int i = 0; i < Channels; i++) {
-      in_conns[i].connect(input, i, filtfolder[i].filter, 0);
+      in_conns[i].connect(input, i, filtfolder[i].folder, 0);
       out_conns[i].connect(filtfolder[i].mixer, 0, output, i);
     }
   }
@@ -28,80 +42,118 @@ public:
   }
 
   void View() {
+    const char * const modename[] = {
+      "", "+LPF", "+BPF", "+HPF"
+    };
     const int label_x = 1;
-    gfxStartCursor(label_x, 15);
-    gfxPrintPitchHz(pitch);
-    gfxEndCursor(cursor == 0);
-    gfxStartCursor();
-    gfxPrintIcon(pitch_cv.Icon());
-    gfxEndCursor(cursor == 1, false, pitch_cv.InputName());
+    int label_y = 15;
 
-    gfxPrint(label_x, 25, "Res: ");
-    gfxStartCursor();
-    graphics.printf("%3d%%", res);
-    gfxEndCursor(cursor == 2);
-    gfxStartCursor();
-    gfxPrintIcon(res_cv.Icon());
-    gfxEndCursor(cursor == 3, false, res_cv.InputName());
-
-    gfxPrint(label_x, 35, "Fld: ");
+    gfxPrint(label_x, label_y, "Fld: ");
     gfxStartCursor();
     graphics.printf("%3d%%", fold);
-    gfxEndCursor(cursor == 4);
+    gfxEndCursor(cursor == FOLD_AMT);
     gfxStartCursor();
     gfxPrintIcon(fold_cv.Icon());
-    gfxEndCursor(cursor == 5, false, fold_cv.InputName());
+    gfxEndCursor(cursor == FOLD_CV, false, fold_cv.InputName());
 
-    gfxPrint(label_x, 45, "Amp:");
+    label_y += 10;
+    gfxIcon(label_x, label_y, PhzIcons::filter);
+    gfxStartCursor(label_x + 9, label_y);
+    gfxPrint("FOLD");
+    gfxPrint(modename[filtfolder[0].modesel]);
+    gfxEndCursor(cursor == FILTMODE);
+
+    if (filtfolder[0].modesel) {
+      label_y += 10;
+      gfxStartCursor(label_x, label_y);
+      gfxPrintPitchHz(pitch);
+      gfxEndCursor(cursor == FILTER_FREQ);
+      gfxStartCursor();
+      gfxPrintIcon(pitch_cv.Icon());
+      gfxEndCursor(cursor == FILTER_FREQ_CV, false, pitch_cv.InputName());
+
+      label_y += 10;
+      gfxPrint(label_x, label_y, "Res: ");
+      gfxStartCursor();
+      graphics.printf("%3d%%", res);
+      gfxEndCursor(cursor == FILTER_RES);
+      gfxStartCursor();
+      gfxPrintIcon(res_cv.Icon());
+      gfxEndCursor(cursor == FILTER_RES_CV, false, res_cv.InputName());
+    }
+
+    label_y += 10;
+    gfxPrint(label_x, label_y, "Amp:");
     gfxStartCursor();
     gfxPrintDb(amplevel);
-    gfxEndCursor(cursor == 6);
+    gfxEndCursor(cursor == AMP);
     gfxStartCursor();
     gfxPrintIcon(amp_cv.Icon());
-    gfxEndCursor(cursor == 7, false, amp_cv.InputName());
+    gfxEndCursor(cursor == AMP_CV, false, amp_cv.InputName());
+
+    gfxDisplayInputMapEditor();
   }
 
-  void OnEncoderMove(int direction) {
+  void OnButtonPress() override {
+    if (CheckEditInputMapPress(
+          cursor,
+          IndexedInput(FILTER_FREQ_CV, pitch_cv),
+          IndexedInput(FILTER_RES_CV, res_cv),
+          IndexedInput(FOLD_CV, fold_cv),
+          IndexedInput(AMP_CV, amp_cv)
+        ))
+      return;
+    CursorToggle();
+  }
+  void OnEncoderMove(int direction) override {
     if (!EditMode()) {
-      MoveCursor(cursor, direction, 7);
+      do {
+        MoveCursor(cursor, direction, CURSOR_MAX);
+      } while (0 == filtfolder[0].modesel && cursor >= FILTER_FREQ && cursor <= FILTER_RES_CV);
       return;
     }
+    if (EditSelectedInputMap(direction)) return;
     switch (cursor) {
-      case 0:
+      case FILTMODE:
+        ChangeMode(direction);
+        break;
+      case FILTER_FREQ:
         pitch = constrain(pitch + direction * 16, -8 * 12 * 128, 8 * 12 * 128);
         break;
-      case 1:
+      case FILTER_FREQ_CV:
         pitch_cv.ChangeSource(direction);
         break;
-      case 2:
+      case FILTER_RES:
         res = constrain(res + direction, 70, 500);
         break;
-      case 3:
+      case FILTER_RES_CV:
         res_cv.ChangeSource(direction);
         break;
-      case 4:
+      case FOLD_AMT:
         fold = constrain(fold + direction, 0, 400);
         break;
-      case 5:
+      case FOLD_CV:
         fold_cv.ChangeSource(direction);
         break;
-      case 6:
+      case AMP:
         amplevel = constrain(amplevel + direction, LVL_MIN_DB, LVL_MAX_DB);
         break;
-      case 7:
+      case AMP_CV:
         amp_cv.ChangeSource(direction);
         break;
     }
   }
 
   void OnDataRequest(std::array<uint64_t, CONFIG_SIZE>& data) override {
-    data[0] = PackPackables(pitch, res, fold, amplevel);
+    data[0] = PackPackables(pitch, res, fold, amplevel, filtfolder[0].modesel);
     data[1] = PackPackables(pitch_cv, res_cv, fold_cv, amp_cv);
   }
 
   void OnDataReceive(const std::array<uint64_t, CONFIG_SIZE>& data) override {
-    UnpackPackables(data[0], pitch, res, fold, amplevel);
+    UnpackPackables(data[0], pitch, res, fold, amplevel, filtfolder[0].modesel);
     UnpackPackables(data[1], pitch_cv, res_cv, fold_cv, amp_cv);
+    if (Channels == STEREO)
+      filtfolder[1].modesel = filtfolder[0].modesel;
   }
 
   AudioStream* InputStream() override {
@@ -120,26 +172,35 @@ private:
   CVInputMap pitch_cv;
   int16_t res = 75;
   CVInputMap res_cv;
-  int16_t fold = 0;
+  int16_t fold = 6; // 0% is mute, 6% is dry
   CVInputMap fold_cv;
   int8_t amplevel = 0;
   CVInputMap amp_cv;
 
   struct FilterFolder {
-    AudioFilterStateVariable filter;
     AudioEffectWaveFolder folder;
+    AudioFilterStateVariable filter;
     AudioSynthWaveformDc drive;
     AudioMixer4 mixer;
 
-    AudioConnection conn1{filter, 0, mixer, 0};
-    AudioConnection conn2{filter, 0, folder, 0};
-    AudioConnection conn3{folder, 0, mixer, 3};
+    uint8_t modesel = 0; // 0 = BYPASS, 1 = LPF, 2 = BPF, 3 = HPF
+
+    AudioConnection conn0{folder, 0, filter, 0};
+    AudioConnection conn2{folder, 0, mixer, 0};
+    AudioConnection conn1{filter, 0, mixer, 1};
+    AudioConnection conn1a{filter, 1, mixer, 2};
+    AudioConnection conn1b{filter, 2, mixer, 3};
+
     AudioConnection conn4{drive, 0, folder, 1};
 
+    void ChangeMode(int8_t dir = 1) {
+      modesel = constrain(modesel + dir, 0, 3);
+    }
     void AmpAndFold(float foldF, float level) {
       drive.amplitude(foldF);
-      mixer.gain(0, level * (1.0 - abs(foldF)));
-      mixer.gain(3, foldF * 0.9);
+      for (int i = 0; i < 4; ++i) {
+        mixer.gain(i, (i == modesel) * level);
+      }
     }
   };
 
@@ -149,4 +210,11 @@ private:
 
   std::array<AudioConnection, Channels> in_conns;
   std::array<AudioConnection, Channels> out_conns;
+
+  void ChangeMode(int dir) {
+    uint8_t newmode = constrain(filtfolder[0].modesel + dir, 0, 3);
+    for (int i = 0; i < Channels; i++) {
+      filtfolder[i].modesel = newmode;
+    }
+  }
 };
