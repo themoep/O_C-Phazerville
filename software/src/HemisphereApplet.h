@@ -404,11 +404,11 @@ public:
     void gfxEndCursor(bool selected, bool spicy = false, const char *str = nullptr) {
         if (selected) {
           if (str) {
-            gfxClear(cursor_start_x - 14, cursor_start_y, 24, 10);
-            gfxFrame(cursor_start_x - 13, cursor_start_y, 22, 10, spicy);
-            gfxPrint(cursor_start_x - 11, cursor_start_y+2, str);
+            gfxClear(cursor_start_x - 14, cursor_start_y-1, 24, 10);
+            gfxFrame(cursor_start_x - 13, cursor_start_y-1, 22, 10, spicy);
+            gfxPrint(cursor_start_x - 11, cursor_start_y+1, str);
             if (EditMode())
-              gfxInvert(cursor_start_x - 14, cursor_start_y, 24, 10);
+              gfxInvert(cursor_start_x - 14, cursor_start_y-1, 24, 10);
           } else {
             int16_t w = gfxGetPrintPosX() - cursor_start_x;
             int16_t y = gfxGetPrintPosY() + 8;
