@@ -31,19 +31,27 @@ public:
   }
 
   void Controller() {
+    const bool tiltmode = filtfolder[0].modesel > 3;
+    const int bias = tiltmode ? tiltbias + res_cv.InRescaled(LVL_MAX_DB) : 0;
+
     for (int i = 0; i < Channels; i++) {
       filtfolder[i].filter.frequency(PitchToRatio(pitch + pitch_cv.In()) * C3);
-      filtfolder[i].filter.resonance(0.01f * (res + res_cv.InRescaled(500)));
+      if (tiltmode) {
+        filtfolder[i].filter.resonance(0.70);
+      } else {
+        filtfolder[i].filter.resonance(0.01f * (res + res_cv.InRescaled(500)));
+      }
       filtfolder[i].AmpAndFold(
         0.01f * fold * fold_cv.InF(1.0f),
-        dbToScalar(amplevel) * amp_cv.InF(1.0f)
+        dbToScalar(amplevel - abs(bias)) * amp_cv.InF(1.0f),
+        bias
       );
     }
   }
 
   void View() {
     const char * const modename[] = {
-      "", "+LPF", "+BPF", "+HPF"
+      "", "+LPF", "+BPF", "+HPF", "+Tilt"
     };
     const int label_x = 1;
     int label_y = 15;
@@ -73,13 +81,23 @@ public:
       gfxEndCursor(cursor == FILTER_FREQ_CV, false, pitch_cv.InputName());
 
       label_y += 10;
-      gfxPrint(label_x, label_y, "Res: ");
-      gfxStartCursor();
-      graphics.printf("%3d%%", res);
-      gfxEndCursor(cursor == FILTER_RES);
-      gfxStartCursor();
-      gfxPrintIcon(res_cv.Icon());
-      gfxEndCursor(cursor == FILTER_RES_CV, false, res_cv.InputName());
+      if (filtfolder[0].modesel < 4) {
+        gfxPrint(label_x, label_y, "Res: ");
+        gfxStartCursor();
+        graphics.printf("%3d%%", res);
+        gfxEndCursor(cursor == FILTER_RES);
+        gfxStartCursor();
+        gfxPrintIcon(res_cv.Icon());
+        gfxEndCursor(cursor == FILTER_RES_CV, false, res_cv.InputName());
+      } else {
+        gfxPrint(label_x, label_y, "LF: ");
+        gfxStartCursor();
+        gfxPrintDb(tiltbias);
+        gfxEndCursor(cursor == FILTER_RES);
+        gfxStartCursor();
+        gfxPrintIcon(res_cv.Icon());
+        gfxEndCursor(cursor == FILTER_RES_CV, false, res_cv.InputName());
+      }
     }
 
     label_y += 10;
@@ -124,7 +142,10 @@ public:
         pitch_cv.ChangeSource(direction);
         break;
       case FILTER_RES:
-        res = constrain(res + direction, 70, 500);
+        if (filtfolder[0].modesel > 3)
+          tiltbias = constrain(tiltbias + direction, LVL_MIN_DB, LVL_MAX_DB);
+        else
+          res = constrain(res + direction, 70, 500);
         break;
       case FILTER_RES_CV:
         res_cv.ChangeSource(direction);
@@ -176,6 +197,7 @@ private:
   CVInputMap fold_cv;
   int8_t amplevel = 0;
   CVInputMap amp_cv;
+  int8_t tiltbias = 0; // dB
 
   struct FilterFolder {
     AudioEffectWaveFolder folder;
@@ -183,7 +205,7 @@ private:
     AudioSynthWaveformDc drive;
     AudioMixer4 mixer;
 
-    uint8_t modesel = 0; // 0 = BYPASS, 1 = LPF, 2 = BPF, 3 = HPF
+    uint8_t modesel = 0; // 0 = BYPASS, 1 = LPF, 2 = BPF, 3 = HPF, 4 = Tilt
 
     AudioConnection conn0{folder, 0, filter, 0};
     AudioConnection conn2{folder, 0, mixer, 0};
@@ -193,13 +215,13 @@ private:
 
     AudioConnection conn4{drive, 0, folder, 1};
 
-    void ChangeMode(int8_t dir = 1) {
-      modesel = constrain(modesel + dir, 0, 3);
-    }
-    void AmpAndFold(float foldF, float level) {
+    void AmpAndFold(float foldF, float level, int tilt = 0) {
       drive.amplitude(foldF);
       for (int i = 0; i < 4; ++i) {
-        mixer.gain(i, (i == modesel) * level);
+        float chanlvl = (i == modesel || (modesel > 3 && (i==1 || i==3))) * level;
+        if (i==1) chanlvl *= dbToScalar(tilt);
+        if (i==3) chanlvl *= -dbToScalar(-tilt);
+        mixer.gain(i, chanlvl);
       }
     }
   };
@@ -212,7 +234,7 @@ private:
   std::array<AudioConnection, Channels> out_conns;
 
   void ChangeMode(int dir) {
-    uint8_t newmode = constrain(filtfolder[0].modesel + dir, 0, 3);
+    uint8_t newmode = constrain(filtfolder[0].modesel + dir, 0, 4);
     for (int i = 0; i < Channels; i++) {
       filtfolder[i].modesel = newmode;
     }
