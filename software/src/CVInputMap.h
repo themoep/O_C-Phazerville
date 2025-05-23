@@ -11,11 +11,16 @@ inline std::array<OC::SemitoneQuantizer, NUM_CV_INPUTS> cv_semitone_quants;
 
 struct CVInputMap {
   int8_t source = 0;
-  int8_t attenuversion = 50; // +/- 2% increments, 50 is 100%
-                             // max range is +/- 127 (254%)
+  int8_t attenuversion = 50; // 50 is 100%
+                             // max range is +/- 127 (645%)
 
   static constexpr size_t Size = 16; // Make this compatible with Packable
 
+  // increments of 0.1%
+  int Atten() {
+    // exponential curve; 50 becomes 100.0%
+    return 10 * attenuversion * abs(attenuversion) / 25;
+  }
   int RawIn() {
     return source <= ADC_CHANNEL_LAST
       ? frame.inputs[source - 1]
@@ -26,12 +31,12 @@ struct CVInputMap {
 
   int In(int default_value = 0) {
     if (!source) return default_value;
-    return RawIn() * attenuversion * 2 / 100;
+    return RawIn() * Atten() / 1000;
   }
 
   float InF(float default_value = 0.0f) {
     if (!source) return default_value;
-    return 0.02f * attenuversion * static_cast<float>(RawIn())
+    return 0.001f * Atten() * static_cast<float>(RawIn())
       / static_cast<float>(HEMISPHERE_MAX_INPUT_CV);
   }
 
